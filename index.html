@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ストレッチタイマー</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+    body { font-family: 'Noto Sans JP', sans-serif; }
+    .timer-digit {
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .progress-bar-inner {
+      transition: width 1s linear;
+    }
+    .phase-progress-inner {
+      transition: width 1s linear;
+    }
+    #screen-start, #screen-timer, #screen-result {
+      display: none;
+    }
+    #screen-start.active, #screen-timer.active, #screen-result.active {
+      display: flex;
+    }
+    .btn-control {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen flex flex-col">
+
+  <!-- ===== START SCREEN ===== -->
+  <div id="screen-start" class="active flex-col items-center justify-center min-h-screen px-6 py-12 gap-8">
+    <div class="text-center">
+      <div class="text-5xl mb-4">🧘</div>
+      <h1 id="course-title" class="text-2xl font-bold mb-2">ストレッチコース</h1>
+      <p id="course-summary" class="text-gray-400 text-sm"></p>
+    </div>
+    <button
+      id="btn-start"
+      class="btn-control w-full max-w-xs py-5 rounded-2xl text-xl font-bold bg-emerald-500 active:bg-emerald-600 shadow-lg shadow-emerald-900"
+    >
+      ストレッチを開始する
+    </button>
+    <p class="text-gray-500 text-xs text-center max-w-xs">
+      開始ボタンを押すと音声が有効になり、<br>画面が自動でオフにならなくなります。
+    </p>
+  </div>
+
+  <!-- ===== TIMER SCREEN ===== -->
+  <div id="screen-timer" class="flex-col items-stretch min-h-screen">
+
+    <!-- Overall progress -->
+    <div class="px-4 pt-4 pb-1">
+      <div class="flex justify-between text-xs text-gray-400 mb-1">
+        <span id="phase-index-label">1 / 1</span>
+        <span id="total-time-label">全体進捗</span>
+      </div>
+      <div class="w-full bg-gray-800 rounded-full h-2">
+        <div id="overall-progress-bar" class="progress-bar-inner bg-emerald-500 h-2 rounded-full" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Phase name -->
+    <div class="px-6 pt-6 pb-2 text-center">
+      <p id="phase-type-badge" class="text-xs uppercase tracking-widest text-gray-500 mb-1"></p>
+      <h2 id="phase-name" class="text-2xl font-bold leading-tight"></h2>
+    </div>
+
+    <!-- Image or description area -->
+    <div id="media-area" class="flex-1 flex flex-col items-center justify-start px-6 py-2 min-h-0 gap-2">
+      <p id="next-label" class="text-xs uppercase tracking-widest text-yellow-400 mb-3 hidden">次の種目</p>
+      <h3 id="next-name" class="text-xl font-bold text-white mb-3 hidden"></h3>
+      <img id="phase-image" src="" alt="" class="max-w-full max-h-[45vh] rounded-xl object-contain hidden" />
+      <p id="phase-desc" class="text-gray-300 text-base text-center leading-relaxed"></p>
+    </div>
+
+    <!-- Countdown number -->
+    <div class="text-center py-2">
+      <span id="countdown-display" class="timer-digit text-5xl font-black tabular-nums">00</span>
+      <p class="text-gray-500 text-sm mt-1">秒</p>
+    </div>
+
+    <!-- Phase progress bar -->
+    <div class="px-6 py-2">
+      <div class="w-full bg-gray-800 rounded-full h-3">
+        <div id="phase-progress-bar" class="phase-progress-inner bg-emerald-400 h-3 rounded-full" style="width:100%"></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center justify-center gap-6 px-8 py-6">
+      <!-- Back -->
+      <button id="btn-prev" class="btn-control flex flex-col items-center gap-1 text-gray-400 active:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
+        </svg>
+        <span class="text-xs">戻る</span>
+      </button>
+
+      <!-- Pause / Resume -->
+      <button id="btn-pause" class="btn-control w-20 h-20 rounded-full bg-white text-gray-900 flex items-center justify-center shadow-xl active:bg-gray-200">
+        <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+          <rect x="6" y="4" width="4" height="16" rx="1"/>
+          <rect x="14" y="4" width="4" height="16" rx="1"/>
+        </svg>
+        <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 hidden" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </button>
+
+      <!-- Skip -->
+      <button id="btn-next" class="btn-control flex flex-col items-center gap-1 text-gray-400 active:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M6 5l7 7-7 7" />
+        </svg>
+        <span class="text-xs">スキップ</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ===== RESULT SCREEN ===== -->
+  <div id="screen-result" class="flex-col items-center justify-center min-h-screen px-6 py-12 gap-8 text-center">
+    <div class="text-6xl">🎉</div>
+    <h2 class="text-3xl font-bold">お疲れ様でした！</h2>
+    <p class="text-gray-400 text-base">全てのストレッチが完了しました。</p>
+    <button
+      id="btn-restart"
+      class="btn-control w-full max-w-xs py-5 rounded-2xl text-xl font-bold bg-emerald-500 active:bg-emerald-600 shadow-lg shadow-emerald-900"
+    >
+      もう一度やる
+    </button>
+  </div>
+
+  <script>
+  (() => {
+    // ── DOM refs ──────────────────────────────────────────────────────────────
+    const screens = {
+      start:  document.getElementById('screen-start'),
+      timer:  document.getElementById('screen-timer'),
+      result: document.getElementById('screen-result'),
+    };
+    const el = {
+      courseTitle:    document.getElementById('course-title'),
+      courseSummary:  document.getElementById('course-summary'),
+      phaseIndexLabel:document.getElementById('phase-index-label'),
+      totalTimeLabel: document.getElementById('total-time-label'),
+      overallBar:     document.getElementById('overall-progress-bar'),
+      phaseBadge:     document.getElementById('phase-type-badge'),
+      phaseName:      document.getElementById('phase-name'),
+      mediaArea:      document.getElementById('media-area'),
+      nextLabel:      document.getElementById('next-label'),
+      nextName:       document.getElementById('next-name'),
+      phaseImage:     document.getElementById('phase-image'),
+      phaseDesc:      document.getElementById('phase-desc'),
+      countdown:      document.getElementById('countdown-display'),
+      phaseBar:       document.getElementById('phase-progress-bar'),
+      btnStart:       document.getElementById('btn-start'),
+      btnPause:       document.getElementById('btn-pause'),
+      btnPrev:        document.getElementById('btn-prev'),
+      btnNext:        document.getElementById('btn-next'),
+      btnRestart:     document.getElementById('btn-restart'),
+      iconPause:      document.getElementById('icon-pause'),
+      iconPlay:       document.getElementById('icon-play'),
+    };
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    let phases = [];
+    let currentIndex = 0;
+    let remainingSec = 0;
+    let isPaused = false;
+    let tickInterval = null;
+    let wakeLock = null;
+    let audioCtx = null;
+    let totalDuration = 0;
+    let elapsedDuration = 0;
+    // 種目のみの進捗計算用（休憩を除く）
+    let totalExerciseDuration = 0;
+    let totalExerciseCount = 0;
+    let phaseExerciseInfo = []; // 各フェーズ: { exerciseIndex, durationBefore }
+
+    // ── Screen helper ─────────────────────────────────────────────────────────
+    function showScreen(name) {
+      Object.entries(screens).forEach(([k, el]) => {
+        el.classList.toggle('active', k === name);
+      });
+    }
+
+    // ── Load menu.json ────────────────────────────────────────────────────────
+    async function loadMenu() {
+      const res = await fetch('menu.json');
+      const data = await res.json();
+      phases = data.phases;
+      totalDuration = phases.reduce((s, p) => s + p.duration, 0);
+      el.courseTitle.textContent = data.title;
+      // 種目ごとの進捗情報を事前計算
+      let cumExerciseCount = 0, cumExerciseDuration = 0;
+      phaseExerciseInfo = phases.map(p => {
+        if (p.type !== 'rest') {
+          const info = { exerciseIndex: cumExerciseCount + 1, durationBefore: cumExerciseDuration };
+          cumExerciseCount++;
+          cumExerciseDuration += p.duration;
+          return info;
+        } else {
+          return { exerciseIndex: cumExerciseCount, durationBefore: cumExerciseDuration };
+        }
+      });
+      totalExerciseCount = cumExerciseCount;
+      totalExerciseDuration = cumExerciseDuration;
+      const restCount = phases.filter(p => p.type === 'rest').length;
+      el.courseSummary.textContent =
+        `種目 ${totalExerciseCount}種目 ／ 休憩 ${restCount}回 ／ 合計 ${Math.round(totalDuration / 60)} 分`;
+    }
+
+    // ── Wake Lock ─────────────────────────────────────────────────────────────
+    async function requestWakeLock() {
+      if (!('wakeLock' in navigator)) return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        document.addEventListener('visibilitychange', async () => {
+          if (document.visibilityState === 'visible' && !wakeLock) {
+            try { wakeLock = await navigator.wakeLock.request('screen'); } catch {}
+          }
+        });
+      } catch {}
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) { wakeLock.release(); wakeLock = null; }
+    }
+
+    // ── Audio (Web Audio API) ─────────────────────────────────────────────────
+    function ensureAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function playTone({ freq = 880, type = 'sine', duration = 0.15, gain = 0.4, delay = 0 } = {}) {
+      ensureAudioCtx();
+      const t = audioCtx.currentTime + delay;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      gainNode.gain.setValueAtTime(0, t);
+      gainNode.gain.linearRampToValueAtTime(gain, t + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      osc.start(t);
+      osc.stop(t + duration + 0.05);
+    }
+
+    // 開始音：上昇2音
+    function playStartSound() {
+      playTone({ freq: 660, duration: 0.12, gain: 0.35, delay: 0 });
+      playTone({ freq: 880, duration: 0.18, gain: 0.4,  delay: 0.14 });
+    }
+
+    // 終了音：下降2音
+    function playEndSound() {
+      playTone({ freq: 880, duration: 0.12, gain: 0.35, delay: 0 });
+      playTone({ freq: 550, duration: 0.25, gain: 0.4,  delay: 0.14 });
+    }
+
+    // カウントダウンビープ（3,2,1秒前）
+    function playTickSound() {
+      playTone({ freq: 1050, type: 'square', duration: 0.07, gain: 0.2 });
+    }
+
+    // 全体完了音：上昇3音
+    function playCompleteSound() {
+      playTone({ freq: 660,  duration: 0.12, gain: 0.4, delay: 0 });
+      playTone({ freq: 880,  duration: 0.12, gain: 0.4, delay: 0.14 });
+      playTone({ freq: 1100, duration: 0.25, gain: 0.45, delay: 0.28 });
+    }
+
+    // ── Speech (Web Speech API) ───────────────────────────────────────────────
+    function speak(text) {
+      if (!('speechSynthesis' in window) || !text) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'ja-JP';
+      utter.rate = 0.95;
+      window.speechSynthesis.speak(utter);
+    }
+
+    // ── UI update ─────────────────────────────────────────────────────────────
+    function renderPhase(index) {
+      const phase = phases[index];
+      const isRest = phase.type === 'rest';
+      const nextPhase = isRest ? phases[index + 1] : null;
+
+      // badge
+      el.phaseBadge.textContent = isRest ? 'REST' : 'STRETCH';
+      el.phaseBadge.className = `text-xs uppercase tracking-widest mb-1 ${isRest ? 'text-yellow-500' : 'text-emerald-400'}`;
+
+      // name（REST中は「休憩」、通常は種目名）
+      el.phaseName.textContent = phase.name;
+
+      // 次の種目ラベル・名前（REST中のみ表示）
+      const showNext = isRest && nextPhase;
+      el.nextLabel.classList.toggle('hidden', !showNext);
+      el.nextName.classList.toggle('hidden', !showNext);
+      if (showNext) el.nextName.textContent = nextPhase.name;
+
+      // image / description（REST中は次の種目の情報を表示）
+      const displayPhase = showNext ? nextPhase : phase;
+      if (displayPhase.image) {
+        el.phaseImage.src = displayPhase.image;
+        el.phaseImage.alt = displayPhase.name;
+        el.phaseImage.classList.remove('hidden');
+        el.phaseDesc.textContent = displayPhase.description || '';
+      } else {
+        el.phaseImage.classList.add('hidden');
+        el.phaseImage.src = '';
+        el.phaseDesc.textContent = displayPhase.description || '';
+      }
+
+      // index label（種目番号 / 総種目数）
+      const info = phaseExerciseInfo[index];
+      el.phaseIndexLabel.textContent = `${info.exerciseIndex} / ${totalExerciseCount}`;
+
+      // overall progress bar（種目時間ベース）
+      const pct = totalExerciseDuration > 0
+        ? Math.round((info.durationBefore / totalExerciseDuration) * 100)
+        : 0;
+      el.overallBar.style.width = `${pct}%`;
+
+      // phase progress bar (full at start)
+      el.phaseBar.style.width = '100%';
+
+      // countdown
+      el.countdown.textContent = String(remainingSec).padStart(2, '0');
+    }
+
+    function updateCountdown() {
+      el.countdown.textContent = String(remainingSec).padStart(2, '0');
+      // phase bar
+      const phase = phases[currentIndex];
+      const pct = phase.duration > 0
+        ? Math.round((remainingSec / phase.duration) * 100)
+        : 0;
+      el.phaseBar.style.width = `${pct}%`;
+      // overall bar（種目時間ベース・休憩中は進まない）
+      const info = phaseExerciseInfo[currentIndex];
+      const exerciseElapsed = phase.type !== 'rest'
+        ? info.durationBefore + (phase.duration - remainingSec)
+        : info.durationBefore;
+      const overallPct = totalExerciseDuration > 0
+        ? Math.round((exerciseElapsed / totalExerciseDuration) * 100)
+        : 0;
+      el.overallBar.style.width = `${overallPct}%`;
+    }
+
+    function setPauseUI(paused) {
+      el.iconPause.classList.toggle('hidden', paused);
+      el.iconPlay.classList.toggle('hidden', !paused);
+    }
+
+    // ── Timer logic ───────────────────────────────────────────────────────────
+    function startPhase(index, addElapsed = true) {
+      if (addElapsed && index > 0) {
+        elapsedDuration += phases[index - 1].duration;
+      }
+      currentIndex = index;
+      remainingSec = phases[index].duration;
+      isPaused = false;
+      setPauseUI(false);
+      renderPhase(index);
+      playStartSound();
+
+      // Speak: REST中は次の種目を読み上げ、通常は現在の種目を読み上げ
+      const phase = phases[index];
+      if (phase.type === 'rest') {
+        const next = phases[index + 1];
+        if (next) {
+          const speakText = next.description
+            ? `休憩。次は${next.name}。${next.description}`
+            : `休憩。次は${next.name}`;
+          setTimeout(() => speak(speakText), 400);
+        } else {
+          setTimeout(() => speak('休憩'), 400);
+        }
+      } else if (index === 0) {
+        // 最初の種目のみ読み上げ（前に休憩がないため）
+        const speakText = phase.description
+          ? `${phase.name}。${phase.description}`
+          : phase.name;
+        setTimeout(() => speak(speakText), 400);
+      }
+
+      clearInterval(tickInterval);
+      tickInterval = setInterval(tick, 1000);
+    }
+
+    function tick() {
+      if (isPaused) return;
+      remainingSec--;
+
+      // Countdown beeps at 3, 2, 1
+      if (remainingSec <= 3 && remainingSec > 0) {
+        playTickSound();
+      }
+
+      if (remainingSec <= 0) {
+        clearInterval(tickInterval);
+        playEndSound();
+        // advance
+        if (currentIndex + 1 < phases.length) {
+          elapsedDuration += phases[currentIndex].duration;
+          currentIndex++;
+          remainingSec = 0;
+          updateCountdown();
+          setTimeout(() => startPhase(currentIndex, false), 600);
+        } else {
+          // Done
+          elapsedDuration += phases[currentIndex].duration;
+          el.countdown.textContent = '00';
+          el.phaseBar.style.width = '0%';
+          el.overallBar.style.width = '100%';
+          setTimeout(() => {
+            playCompleteSound();
+            speak('全てのストレッチが完了しました。お疲れ様でした。');
+            releaseWakeLock();
+            showScreen('result');
+          }, 700);
+        }
+        return;
+      }
+
+      updateCountdown();
+    }
+
+    function goToPrev() {
+      clearInterval(tickInterval);
+      window.speechSynthesis && window.speechSynthesis.cancel();
+      // Subtract current phase's elapsed offset back
+      if (currentIndex > 0) {
+        elapsedDuration -= phases[currentIndex - 1].duration;
+        if (elapsedDuration < 0) elapsedDuration = 0;
+        startPhase(currentIndex - 1, false);
+      } else {
+        startPhase(0, false);
+      }
+    }
+
+    function goToNext() {
+      if (currentIndex + 1 >= phases.length) return; // 最終フェーズではスキップ不可
+      clearInterval(tickInterval);
+      window.speechSynthesis && window.speechSynthesis.cancel();
+      elapsedDuration += phases[currentIndex].duration;
+      startPhase(currentIndex + 1, false);
+    }
+
+    function togglePause() {
+      isPaused = !isPaused;
+      setPauseUI(isPaused);
+      if (isPaused) {
+        window.speechSynthesis && window.speechSynthesis.cancel();
+      }
+    }
+
+    // ── Entry point ───────────────────────────────────────────────────────────
+    el.btnStart.addEventListener('click', () => {
+      ensureAudioCtx(); // unlock audio on user gesture
+      requestWakeLock();
+      elapsedDuration = 0;
+      showScreen('timer');
+      startPhase(0, false);
+    });
+
+    el.btnPause.addEventListener('click', togglePause);
+    el.btnPrev.addEventListener('click', goToPrev);
+    el.btnNext.addEventListener('click', goToNext);
+
+    el.btnRestart.addEventListener('click', () => {
+      elapsedDuration = 0;
+      currentIndex = 0;
+      showScreen('start');
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    loadMenu().catch(err => {
+      el.courseTitle.textContent = 'データ読み込みエラー';
+      console.error(err);
+    });
+
+  })();
+  </script>
+</body>
+</html>
