@@ -2,10 +2,18 @@
   "title": "夜のストレッチコース",
   "phases": [
     {
+      "id": 0,
+      "type": "rest",
+      "name": "準備",
+      "description": "",
+      "duration": 10,
+      "image": ""
+    },
+    {
       "id": 1,
       "name": "広背筋ストレッチ（左）",
       "speakName": "こうはいきんストレッチ、左",
-      "description": "片方の肘を床につけ、反対の手を延長線上においてキープ",
+      "description": "四つん這いになり、左手を右手の延長線上におく",
       "duration": 30,
       "image": "img/1-広背筋左.png"
     },
@@ -21,7 +29,7 @@
       "id": 3,
       "name": "広背筋ストレッチ（右）",
       "speakName": "こうはいきんストレッチ、右",
-      "description": "反対側の肘を床につけ、もう片方の手を延長線上においてキープ",
+      "description": "四つん這いになり、右手を左手の延長線上におく",
       "duration": 30,
       "image": "img/2-広背筋右.png"
     },
@@ -37,7 +45,7 @@
       "id": 5,
       "name": "大臀筋ストレッチ（左）",
       "speakName": "だいでんきんストレッチ、左",
-      "description": "うつ伏せになり、左膝を横に出して両肘を床につけてキープ",
+      "description": "左足を前にだし、右足は後ろに伸ばす",
       "duration": 30,
       "image": "img/3-大臀筋左.png"
     },
@@ -53,7 +61,7 @@
       "id": 7,
       "name": "大臀筋ストレッチ（右）",
       "speakName": "だいでんきんストレッチ、右",
-      "description": "うつ伏せになり、右膝を横に出して両肘を床につけてキープ",
+      "description": "右足を前にだし、左足は後ろに伸ばす",
       "duration": 30,
       "image": "img/4-大臀筋右.png"
     },
