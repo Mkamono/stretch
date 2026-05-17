@@ -236,11 +236,14 @@
     // ── Audio (Web Audio API) ─────────────────────────────────────────────────
     function ensureAudioCtx() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      // iOSではユーザー操作後も suspended になることがあるので都度 resume
+      if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     function playTone({ freq = 880, type = 'sine', duration = 0.15, gain = 0.4, delay = 0 } = {}) {
       ensureAudioCtx();
-      const t = audioCtx.currentTime + delay;
+      // 最低でも0.01秒先にスケジュールしてクリックノイズを防ぐ
+      const t = audioCtx.currentTime + Math.max(delay, 0.01);
       const osc = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
       osc.connect(gainNode);
@@ -248,10 +251,11 @@
       osc.type = type;
       osc.frequency.setValueAtTime(freq, t);
       gainNode.gain.setValueAtTime(0, t);
-      gainNode.gain.linearRampToValueAtTime(gain, t + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      gainNode.gain.linearRampToValueAtTime(gain, t + 0.02);   // アタック
+      gainNode.gain.linearRampToValueAtTime(0, t + duration);  // リニアフェードアウト（指数より安定）
       osc.start(t);
-      osc.stop(t + duration + 0.05);
+      osc.stop(t + duration + 0.02);
+      osc.onended = () => { osc.disconnect(); gainNode.disconnect(); };
     }
 
     // 開始音：上昇2音
@@ -268,7 +272,7 @@
 
     // カウントダウンビープ（3,2,1秒前）
     function playTickSound() {
-      playTone({ freq: 1050, type: 'square', duration: 0.07, gain: 0.2 });
+      playTone({ freq: 1050, type: 'sine', duration: 0.08, gain: 0.25 });
     }
 
     // 全体完了音：上昇3音
