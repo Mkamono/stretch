@@ -65,34 +65,34 @@
     </div>
 
     <!-- Phase name -->
-    <div class="px-6 pt-6 pb-2 text-center">
+    <div class="px-6 pt-3 pb-1 text-center">
       <p id="phase-type-badge" class="text-xs uppercase tracking-widest text-gray-500 mb-1"></p>
       <h2 id="phase-name" class="text-2xl font-bold leading-tight"></h2>
     </div>
 
     <!-- Image or description area -->
-    <div id="media-area" class="flex-1 flex flex-col items-center justify-start px-6 py-2 min-h-0 gap-2">
-      <p id="next-label" class="text-xs uppercase tracking-widest text-yellow-400 mb-3 hidden">次の種目</p>
-      <h3 id="next-name" class="text-xl font-bold text-white mb-3 hidden"></h3>
-      <img id="phase-image" src="" alt="" class="max-w-full max-h-[45vh] rounded-xl object-contain hidden" />
-      <p id="phase-desc" class="text-gray-300 text-base text-center leading-relaxed"></p>
+    <div id="media-area" class="flex flex-col items-center px-6 pt-2 pb-1 gap-2">
+      <p id="next-label" class="text-xs uppercase tracking-widest text-yellow-400 hidden">次の種目</p>
+      <h3 id="next-name" class="text-xl font-bold text-white hidden"></h3>
+      <img id="phase-image" src="" alt="" class="max-w-full max-h-[38vh] rounded-xl object-contain hidden" />
+      <p id="phase-desc" class="text-gray-300 text-sm text-center leading-relaxed"></p>
     </div>
 
     <!-- Countdown number -->
-    <div class="text-center py-2">
+    <div class="text-center py-1">
       <span id="countdown-display" class="timer-digit text-5xl font-black tabular-nums">00</span>
-      <p class="text-gray-500 text-sm mt-1">秒</p>
+      <p class="text-gray-500 text-sm">秒</p>
     </div>
 
     <!-- Phase progress bar -->
-    <div class="px-6 py-2">
+    <div class="px-6 py-1">
       <div class="w-full bg-gray-800 rounded-full h-3">
         <div id="phase-progress-bar" class="phase-progress-inner bg-emerald-400 h-3 rounded-full" style="width:100%"></div>
       </div>
     </div>
 
     <!-- Controls -->
-    <div class="flex items-center justify-center gap-6 px-8 py-6">
+    <div class="flex items-center justify-center gap-6 px-8 py-4">
       <!-- Back -->
       <button id="btn-prev" class="btn-control flex flex-col items-center gap-1 text-gray-400 active:text-white">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
