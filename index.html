@@ -262,10 +262,15 @@
       osc.onended = () => { osc.disconnect(); gainNode.disconnect(); };
     }
 
-    // 開始音：上昇2音
+    // 種目開始音：上昇2音
     function playStartSound() {
       playTone({ freq: 660, duration: 0.12, gain: 0.35, delay: 0 });
       playTone({ freq: 880, duration: 0.18, gain: 0.4,  delay: 0.14 });
+    }
+
+    // 休憩開始音：短い低めの1音
+    function playRestSound() {
+      playTone({ freq: 440, duration: 0.2, gain: 0.3, delay: 0 });
     }
 
     // 終了音：下降2音
@@ -381,28 +386,29 @@
       isPaused = false;
       setPauseUI(false);
       renderPhase(index);
-      playStartSound();
 
-      // Speak: REST中は次の種目を読み上げ、通常は現在の種目を読み上げ
       const phase = phases[index];
       if (phase.type === 'rest') {
+        playRestSound();
+        // 「休憩」と言わず、次の種目名・説明をすぐ読み上げ
         const next = phases[index + 1];
         if (next) {
           const nextReadName = next.speakName || next.name;
           const speakText = next.description
-            ? `休憩。次は${nextReadName}。${next.description}`
-            : `休憩。次は${nextReadName}`;
+            ? `${nextReadName}。${next.description}`
+            : nextReadName;
           setTimeout(() => speak(speakText), 400);
-        } else {
-          setTimeout(() => speak('休憩'), 400);
         }
-      } else if (index === 0) {
-        // 最初の種目のみ読み上げ（前に休憩がないため）
-        const readName = phase.speakName || phase.name;
-        const speakText = phase.description
-          ? `${readName}。${phase.description}`
-          : readName;
-        setTimeout(() => speak(speakText), 400);
+      } else {
+        playStartSound();
+        // 最初の種目、または直前が休憩でない場合のみ読み上げ
+        if (index === 0 || phases[index - 1]?.type !== 'rest') {
+          const readName = phase.speakName || phase.name;
+          const speakText = phase.description
+            ? `${readName}。${phase.description}`
+            : readName;
+          setTimeout(() => speak(speakText), 400);
+        }
       }
 
       clearInterval(tickInterval);
